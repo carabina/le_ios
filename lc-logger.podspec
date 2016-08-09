@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name = 'lc-logger'
-  s.version = '1.1'
+  s.version = '1.2'
   s.summary = 'LogCentral logger for iOS'
   s.homepage = 'https://github.com/backav/le_ios'
   s.author = { 'http://xiangyang.li' => 'wo@xiangyang.li' }

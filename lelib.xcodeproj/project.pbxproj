@@ -100,6 +100,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		09572DD31D59BD2F0045EB38 /* lc-logger.podspec */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "lc-logger.podspec"; sourceTree = SOURCE_ROOT; };
 		4B08F54818436082003D813B /* LELog.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LELog.h; sourceTree = "<group>"; };
 		4B08F54918436082003D813B /* LELog.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LELog.m; sourceTree = "<group>"; };
 		4B08F54F18436F0F003D813B /* demo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = demo.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -312,6 +313,7 @@
 		4BB806A5181D3DF1003066E5 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				09572DD31D59BD2F0045EB38 /* lc-logger.podspec */,
 				4BB806C8181D3E69003066E5 /* TODO.txt */,
 				4BB806A6181D3DF1003066E5 /* lelib-Prefix.pch */,
 			);
