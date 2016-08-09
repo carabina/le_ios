@@ -17,6 +17,7 @@ LEBackgroundThread* backgroundThread;
 
 dispatch_queue_t le_write_queue;
 char* le_token;
+NSString* endpoint;
 bool le_debug_logs = false;
 
 static int logfile_descriptor;
@@ -64,7 +65,7 @@ static int open_file(const char* path)
     return 0;
 }
 
-void le_poke(void)
+void le_poke()
 {
     if (!backgroundThread) {
         backgroundThread = [LEBackgroundThread new];
@@ -79,6 +80,7 @@ void le_poke(void)
         [initialized unlock];
     }
     
+    backgroundThread.endpoint=endpoint;
     [backgroundThread performSelector:@selector(poke:) onThread:backgroundThread withObject:@(file_order_number) waitUntilDone:NO modes:@[NSDefaultRunLoopMode]];
 }
 
@@ -94,7 +96,7 @@ static void le_exception_handler(NSException *exception)
     }
 }
 
-int le_init(void)
+int le_init()
 {
     static dispatch_once_t once;
     
@@ -173,25 +175,17 @@ void le_log(const char* message)
 {
     dispatch_sync(le_write_queue, ^{
         
-        size_t token_length;
-        
-        if(!is_valid_token(le_token,&token_length))
-            return ;
-        
-
-        size_t max_length = MAXIMUM_LOGENTRY_SIZE - token_length - 2; // minus token length, space separator and lf
+        size_t max_length = MAXIMUM_LOGENTRY_SIZE ; // minus token length, space separator and lf
         
         size_t length = strlen(message);
         if (max_length < length) {
             LE_DEBUG(@"Too large message, it will be truncated");
             length = max_length;
         }
-
-        memcpy(buffer, le_token, token_length);
-        buffer[token_length] = ' ';
-        memcpy(buffer + token_length + 1, message, length);
         
-        size_t total_length = token_length + 1 + length;
+        memcpy(buffer, message, length);
+        
+        size_t total_length = length;
         buffer[total_length++] = '\n';
         
         write_buffer(total_length);
@@ -204,29 +198,23 @@ void le_write_string(NSString* string)
 {
     dispatch_sync(le_write_queue, ^{
         
-        size_t token_length;
-        if(!is_valid_token(le_token,&token_length))
-            return ;
         
-        NSUInteger maxLength = MAXIMUM_LOGENTRY_SIZE - token_length - 2; // minus token length, space separator and \n
+        NSUInteger maxLength = MAXIMUM_LOGENTRY_SIZE; // minus token length, space separator and \n
         if ([string length] > maxLength) {
             LE_DEBUG(@"Too large message, it will be truncated");
         }
-        
-        memcpy(buffer, le_token, token_length);
-        buffer[token_length] = ' ';
 
         NSRange range = {.location = 0, .length = [string length]};
         
         NSUInteger usedLength = 0;
-        BOOL r = [string getBytes:(buffer + token_length + 1) maxLength:maxLength usedLength:&usedLength encoding:NSUTF8StringEncoding options:NSStringEncodingConversionAllowLossy range:range remainingRange:NULL];
+        BOOL r = [string getBytes:(buffer) maxLength:maxLength usedLength:&usedLength encoding:NSUTF8StringEncoding options:NSStringEncodingConversionAllowLossy range:range remainingRange:NULL];
         
         if (!r) {
             LE_DEBUG(@"Error converting message characters.");
             return;
         }
         
-        NSUInteger totalLength = token_length + 1 + usedLength;
+        NSUInteger totalLength = usedLength;
         buffer[totalLength++] = '\n';
         write_buffer((size_t)totalLength);
     });
@@ -250,6 +238,15 @@ void le_set_token(const char* token)
     });
 }
 
+char* le_get_token()
+{
+    return le_token;
+}
+
+void le_set_endpoint(NSString* ep)
+{
+    endpoint=ep;
+}
 bool is_valid_token(const char * token,size_t* token_length)
 {
     size_t length = 0;

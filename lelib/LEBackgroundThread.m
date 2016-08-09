@@ -33,7 +33,6 @@
 }
 
 @property (nonatomic, assign) FILE* inputFile;
-@property (nonatomic, strong) NSOutputStream* outputSocketStream;
 @property (nonatomic, strong) NSTimer* retryTimer;
 @property (nonatomic, strong) LeNetworkStatus* networkStatus;
 
@@ -51,19 +50,7 @@
 
 - (void)initNetworkCommunication
 {
-    CFWriteStreamRef writeStream;
-    CFStreamCreatePairWithSocketToHost(NULL, (CFStringRef)LOGENTRIES_HOST, LOGENTRIES_PORT, NULL, &writeStream);
     
-    self.outputSocketStream = (__bridge_transfer NSOutputStream *)writeStream;
-    
-#if LOGENTRIES_USE_TLS
-    [self.outputSocketStream setProperty:(__bridge id)kCFStreamSocketSecurityLevelNegotiatedSSL
-                                  forKey:(__bridge id)kCFStreamPropertySocketSecurityLevel];
-#endif
-    
-    self.outputSocketStream.delegate = self;
-    [self.outputSocketStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    [self.outputSocketStream open];
 }
 
 - (void)checkConnection
@@ -105,9 +92,6 @@
     
     if (eventCode & NSStreamEventErrorOccurred) {
         LE_DEBUG(@"Socket event NSStreamEventErrorOccurred, scheduling retry timer");
-        eventCode = (NSStreamEvent)(eventCode & ~NSStreamEventErrorOccurred);
-        [self.outputSocketStream close];
-        self.outputSocketStream = nil;
         
         self.networkStatus = [LeNetworkStatus new];
         self.networkStatus.delegate = self;
@@ -252,26 +236,7 @@
         }
     }
 
-    
-    if (self.retryTimer) {
-        LE_DEBUG(@"Retry timer active");
-        return;
-    }
-    
-    if (!self.outputSocketStream) {
-        [self initNetworkCommunication];
-    }
-    
-    if ([self.outputSocketStream streamStatus] != NSStreamStatusOpen) {
-        LE_DEBUG(@"Stream not open yet");
-        return;
-    }
-    
-    if (![self.outputSocketStream hasSpaceAvailable]) {
-        LE_DEBUG(@"No space available");
-        return;
-    }
-    
+
     NSUInteger maxLength = output_buffer_length - output_buffer_position;
     
     // truncate maxLength if we need to move to another file
@@ -287,13 +252,24 @@
         }
     }
     
-	NSInteger written = [self.outputSocketStream write:output_buffer + output_buffer_position maxLength:maxLength];
-    LE_DEBUG(@"Send out %ld bytes", (long)written);
-    if (written == -1) {
-        LE_DEBUG(@"write error occured %@", self.outputSocketStream.streamError);
-        return;
+    NSMutableURLRequest *req=[NSMutableURLRequest requestWithURL:[NSURL URLWithString:self.endpoint]];
+    [req setHTTPMethod:@"POST"];
+    [req setValue:@"application/octet-stream" forHTTPHeaderField:@"Content-Type"];
+    [req setValue:[NSString stringWithCString:le_get_token() encoding:NSUTF8StringEncoding] forHTTPHeaderField:@"X-LOGCENTRAL-TOKEN"];
+    [req setHTTPBody:[NSData dataWithBytes:output_buffer length:output_buffer_length]];
+    
+    NSURLResponse *res;
+    NSError *err;
+    [NSURLConnection sendSynchronousRequest:req returningResponse:&res error:&err];
+    
+    NSInteger written = 0;
+    if (!err) {
+        written=(NSInteger)output_buffer_length;
+    }else{
+        LE_DEBUG(@"Upload Fail:%@,%@",err,res);
     }
-/*
+    
+    /*
     for (int i = 0; i < written; i++) {
         char c = output_buffer[output_buffer_position + i];
         LE_DEBUG(@"written '%c' (%02x)", c, c);

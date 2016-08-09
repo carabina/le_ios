@@ -19,6 +19,11 @@ extern LEBackgroundThread* backgroundThread;
 extern dispatch_queue_t le_write_queue;
 extern char* le_token;
 
+@interface LELog(){
+    NSString *logOpen;// YES for True
+}
+@end
+
 @implementation LELog
 
 - (id)init
@@ -42,6 +47,36 @@ extern char* le_token;
 
 - (void)log:(NSObject*)object
 {
+    
+    if (self.switchURL) {
+        if ([@"NO" isEqualToString:logOpen]) {
+            return;
+        }
+        if ([@"CHECKING" isEqualToString:logOpen]) {
+            return;
+        }
+        
+        if (!logOpen) {
+            
+            __weak LELog *weakSelf=self;
+            NSURLRequest *req=[NSURLRequest requestWithURL:[NSURL URLWithString:self.switchURL]];
+            [NSURLConnection sendAsynchronousRequest:req queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse * _Nullable response, NSData * _Nullable data, NSError * _Nullable connectionError) {
+                __strong LELog *strongSelf=weakSelf;
+                if (!connectionError) {
+                    NSHTTPURLResponse *httpResponse = (NSHTTPURLResponse *) response;
+                    if (httpResponse.statusCode==200) {
+                        strongSelf->logOpen=@"YES";
+                        return;
+                    }
+                }
+                strongSelf->logOpen=@"NO";
+                
+            }];
+            logOpen=@"CHECKING";
+            return;
+        }
+    }
+    
     NSString* text = nil;
     
     if ([object respondsToSelector:@selector(leDescription)]) {

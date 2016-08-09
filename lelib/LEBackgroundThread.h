@@ -19,10 +19,12 @@
  Initialization lock used to wait for background thread.
  */
 @property (atomic, strong) NSCondition* initialized;
+@property (atomic,copy) NSString* endpoint;
 
 /*
  This method is invoked by le_poke() when new data are available.
  */
 - (void)poke:(NSNumber*)lastLogFileNumber;
+
 
 @end

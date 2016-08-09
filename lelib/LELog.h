@@ -23,6 +23,7 @@
 + (LELog*)sharedInstance;
 
 + (LELog*)sessionWithToken:(NSString*)token;
+
 /*
  Display all messages on TTY for debug purposes
  */
@@ -32,6 +33,8 @@
  Appends space separated token to each log message.
  */
 @property (atomic, copy) NSString* token;
+@property (atomic, copy) NSString* switchURL;
+@property (atomic,copy) NSString* endpoint;
 
 /*
  When object implements LELoggableObject interface, it logs return value of
