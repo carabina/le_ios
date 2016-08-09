@@ -48,9 +48,7 @@ extern char* le_token;
 - (void)log:(NSObject*)object
 {
     
-    if (![self log_allowed]) {
-        return;
-    }
+   
     
     NSString* text = nil;
     
@@ -68,7 +66,10 @@ extern char* le_token;
     LE_DEBUG(@"%@", text);
     
     le_write_string(text);
-    le_poke();
+    
+    if ([self log_allowed]) {
+        le_poke();
+    }
 }
 
 -(bool)log_allowed

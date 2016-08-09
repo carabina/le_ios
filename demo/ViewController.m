@@ -45,6 +45,7 @@
 {
     [super viewDidLoad];
     LELog* log = [LELog sessionWithToken:@"ef34ff36cd937f0768f047f135eb927931a3507f" endpoint:@"http://localhost:5000/log"];
+    log.switchURL=@"http://localhost:5000/log/switch";
     log.debugLogs = YES;
     log.logApplicationLifecycleNotifications = YES;
     
