@@ -22,8 +22,7 @@
 
 + (LELog*)sharedInstance;
 
-+ (LELog*)sessionWithToken:(NSString*)token;
-
++ (LELog*)sessionWithToken:(NSString*)token endpoint:(NSString*)endpoint;
 /*
  Display all messages on TTY for debug purposes
  */
@@ -34,7 +33,6 @@
  */
 @property (atomic, copy) NSString* token;
 @property (atomic, copy) NSString* switchURL;
-@property (atomic,copy) NSString* endpoint;
 
 /*
  When object implements LELoggableObject interface, it logs return value of

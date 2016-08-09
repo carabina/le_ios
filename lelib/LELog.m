@@ -85,7 +85,7 @@ extern char* le_token;
             
             __weak LELog *weakSelf=self;
             NSMutableURLRequest *req=[NSMutableURLRequest requestWithURL:[NSURL URLWithString:self.switchURL]];
-            
+            [req setValue:[NSString stringWithCString:le_get_token() encoding:NSUTF8StringEncoding] forHTTPHeaderField:@"X-LOGCENTRAL-TOKEN"];
             [NSURLConnection sendAsynchronousRequest:req queue:[[NSOperationQueue alloc] init] completionHandler:^(NSURLResponse * _Nullable response, NSData * _Nullable data, NSError * _Nullable connectionError) {
                 __strong LELog *strongSelf=weakSelf;
                 if (!connectionError) {
@@ -119,8 +119,9 @@ extern char* le_token;
     });
     return sharedInstance;
 }
-+(LELog*)sessionWithToken:(NSString*)token{
++(LELog*)sessionWithToken:(NSString*)token endpoint:(NSString *)endpoint{
     
+    le_set_endpoint(endpoint);
     LELog * leLog = [self sharedInstance];
     [leLog setToken:token];
     return leLog;
